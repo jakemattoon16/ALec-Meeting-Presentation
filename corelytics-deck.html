@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What We Built for Corelytics — Lane6</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal: #00D4C8;
+    --teal-dim: rgba(0, 212, 200, 0.12);
+    --teal-border: rgba(0, 212, 200, 0.3);
+    --black: #080C0C;
+    --surface: #0E1515;
+    --surface2: #131D1D;
+    --white: #F0F4F4;
+    --muted: #7A9494;
+    --slide-w: 1280px;
+    --slide-h: 720px;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #04080A;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    color: var(--white);
+  }
+
+  /* ── VIEWPORT SCALER ── */
+  #scaler {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #deck {
+    width: var(--slide-w);
+    height: var(--slide-h);
+    position: relative;
+    transform-origin: center center;
+  }
+
+  /* ── SLIDES ── */
+  .slide {
+    position: absolute;
+    inset: 0;
+    background: var(--black);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+    overflow: hidden;
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* ── GEOMETRIC ACCENTS (reusable) ── */
+  .geo-tr {
+    position: absolute;
+    top: 0; right: 0;
+    width: 320px; height: 320px;
+    border-left: 1px solid var(--teal-border);
+    border-bottom: 1px solid var(--teal-border);
+    border-bottom-left-radius: 0;
+  }
+  .geo-bl {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 200px; height: 200px;
+    border-right: 1px solid var(--teal-border);
+    border-top: 1px solid var(--teal-border);
+  }
+  .geo-dot {
+    width: 6px; height: 6px;
+    background: var(--teal);
+    border-radius: 50%;
+  }
+  .h-rule {
+    height: 1px;
+    background: linear-gradient(90deg, var(--teal) 0%, transparent 100%);
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 1 — TITLE
+  ══════════════════════════════════════ */
+  #s1 {
+    justify-content: center;
+    align-items: flex-start;
+    padding: 80px 100px;
+  }
+  #s1 .eyebrow {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 28px;
+  }
+  #s1 .eyebrow .geo-dot { }
+  #s1 .eyebrow span {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 600;
+  }
+  #s1 h1 {
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    max-width: 700px;
+    margin-bottom: 24px;
+  }
+  #s1 h1 em {
+    font-style: normal;
+    color: var(--teal);
+  }
+  #s1 .subtitle {
+    font-size: 20px;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    margin-bottom: 56px;
+    max-width: 560px;
+  }
+  #s1 .tag-row {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  #s1 .tag {
+    border: 1px solid var(--teal-border);
+    padding: 6px 16px;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal);
+    background: var(--teal-dim);
+  }
+  #s1 .brand-corner {
+    position: absolute;
+    top: 40px; right: 60px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  #s1 .brand-corner .logo-mark {
+    width: 32px; height: 32px;
+    border: 2px solid var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(45deg);
+  }
+  #s1 .brand-corner .logo-mark span {
+    transform: rotate(-45deg);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--teal);
+    letter-spacing: -0.03em;
+  }
+  #s1 .brand-corner .brand-name {
+    font-size: 16px; font-weight: 700;
+    color: var(--white); letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  #s1 .big-geo {
+    position: absolute;
+    right: -60px; bottom: -60px;
+    width: 420px; height: 420px;
+    border: 1px solid var(--teal-border);
+    transform: rotate(15deg);
+  }
+  #s1 .big-geo-2 {
+    position: absolute;
+    right: 20px; bottom: -20px;
+    width: 300px; height: 300px;
+    border: 1px solid rgba(0,212,200,0.08);
+    transform: rotate(30deg);
+  }
+  #s1 .slide-num {
+    position: absolute; bottom: 36px; right: 60px;
+    font-size: 11px; color: var(--muted); letter-spacing: 0.15em;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 2 — THE SETUP
+  ══════════════════════════════════════ */
+  #s2 {
+    justify-content: center;
+    padding: 72px 100px;
+  }
+  #s2 .s-label {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 16px; font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+  }
+  #s2 h2 {
+    font-size: 52px; font-weight: 700;
+    line-height: 1.08; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 28px;
+    max-width: 640px;
+  }
+  #s2 .h-rule { width: 80px; margin-bottom: 36px; }
+  #s2 .body-copy {
+    font-size: 20px; line-height: 1.75;
+    color: #B0C8C8;
+    max-width: 760px;
+  }
+  #s2 .body-copy strong { color: var(--teal); font-weight: 600; }
+  #s2 .stat-row {
+    display: flex; gap: 48px; margin-top: 48px;
+  }
+  #s2 .stat { display: flex; flex-direction: column; gap: 4px; }
+  #s2 .stat .num {
+    font-size: 36px; font-weight: 700; color: var(--teal); letter-spacing: -0.02em;
+  }
+  #s2 .stat .lbl {
+    font-size: 12px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  #s2 .slide-num {
+    position: absolute; bottom: 36px; right: 60px;
+    font-size: 11px; color: var(--muted); letter-spacing: 0.15em;
+  }
+
+  /* ══════════════════════════════════════
+     TOOL SLIDES (3, 4, 5)
+  ══════════════════════════════════════ */
+  .tool-slide {
+    flex-direction: row;
+  }
+  .tool-slide .left-panel {
+    width: 480px;
+    min-width: 480px;
+    background: var(--surface);
+    border-right: 1px solid var(--teal-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 64px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tool-slide .left-panel .panel-geo {
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 200px; height: 200px;
+    border: 1px solid var(--teal-border);
+    transform: rotate(20deg);
+  }
+  .tool-slide .left-panel .tool-num {
+    font-size: 100px;
+    font-weight: 800;
+    color: rgba(0,212,200,0.06);
+    line-height: 1;
+    position: absolute;
+    top: 32px; right: 32px;
+    letter-spacing: -0.04em;
+  }
+  .tool-slide .left-panel .tool-label {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--teal); font-weight: 600; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tool-slide .left-panel h2 {
+    font-size: 34px; font-weight: 700;
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 20px;
+  }
+  .tool-slide .left-panel .h-rule { width: 60px; margin-bottom: 24px; }
+  .tool-slide .left-panel .desc {
+    font-size: 15px; line-height: 1.7;
+    color: #9ABABA;
+  }
+  .tool-slide .left-panel .desc strong { color: var(--teal); font-weight: 600; }
+  .tool-slide .left-panel .tool-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 28px;
+    color: var(--teal);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    border: 1px solid var(--teal-border);
+    padding: 10px 18px;
+    background: var(--teal-dim);
+    transition: background 0.2s, border-color 0.2s;
+    width: fit-content;
+  }
+  .tool-slide .left-panel .tool-link:hover {
+    background: rgba(0,212,200,0.22);
+    border-color: var(--teal);
+  }
+  .tool-slide .left-panel .tool-link .arrow {
+    font-size: 15px; transition: transform 0.2s;
+  }
+  .tool-slide .left-panel .tool-link:hover .arrow { transform: translateX(3px); }
+
+  .tool-slide .right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 64px 60px;
+    gap: 24px;
+  }
+  .tool-slide .right-panel .rp-label {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+  }
+  .detail-card {
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 20px 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .detail-card .card-icon {
+    width: 32px; min-width: 32px; height: 32px;
+    border: 1px solid var(--teal-border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--teal); font-size: 14px; font-weight: 700;
+  }
+  .detail-card .card-body {}
+  .detail-card .card-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--teal); margin-bottom: 4px;
+  }
+  .detail-card .card-text {
+    font-size: 14px; line-height: 1.6; color: #9ABABA;
+  }
+  .detail-card .card-text strong { color: var(--white); }
+
+  .hook-box {
+    border-left: 3px solid var(--teal);
+    padding: 16px 20px;
+    background: var(--teal-dim);
+    font-size: 15px; font-style: italic;
+    color: var(--white); line-height: 1.55;
+  }
+
+  .tool-slide .slide-num {
+    position: absolute; bottom: 28px; right: 48px;
+    font-size: 11px; color: var(--muted); letter-spacing: 0.15em;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 6 — ASK
+  ══════════════════════════════════════ */
+  #s6 {
+    justify-content: center;
+    padding: 72px 100px;
+  }
+  #s6 .s-label {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 16px; font-weight: 600;
+  }
+  #s6 h2 {
+    font-size: 52px; font-weight: 700;
+    line-height: 1.08; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 12px;
+    max-width: 600px;
+  }
+  #s6 .h-rule { width: 80px; margin-bottom: 40px; }
+  #s6 .ask-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 960px;
+  }
+  .ask-item {
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-left: 3px solid var(--teal);
+    padding: 24px 28px;
+  }
+  .ask-item .ask-num {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.15em;
+    color: var(--teal); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .ask-item .ask-title {
+    font-size: 17px; font-weight: 700; color: var(--white);
+    margin-bottom: 6px; line-height: 1.3;
+  }
+  .ask-item .ask-sub {
+    font-size: 13px; color: var(--muted); line-height: 1.55;
+  }
+  #s6 .slide-num {
+    position: absolute; bottom: 36px; right: 60px;
+    font-size: 11px; color: var(--muted); letter-spacing: 0.15em;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 7 — LEAD FLOW
+  ══════════════════════════════════════ */
+  #s7 {
+    justify-content: center;
+    padding: 72px 100px;
+  }
+  #s7 .s-label {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 16px; font-weight: 600;
+  }
+  #s7 h2 {
+    font-size: 48px; font-weight: 700;
+    line-height: 1.1; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 12px;
+  }
+  #s7 .h-rule { width: 80px; margin-bottom: 44px; }
+  #s7 .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    max-width: 1040px;
+  }
+  .flow-step {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 28px 24px;
+    position: relative;
+  }
+  .flow-step + .flow-step { border-left: none; }
+  .flow-step::after {
+    content: '→';
+    position: absolute;
+    right: -18px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--teal);
+    font-size: 20px;
+    z-index: 2;
+    background: var(--black);
+    padding: 4px 2px;
+  }
+  .flow-step:last-child::after { display: none; }
+  .flow-step .step-icon {
+    width: 36px; height: 36px;
+    border: 1px solid var(--teal-border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--teal); font-size: 15px; font-weight: 800;
+    margin-bottom: 14px;
+  }
+  .flow-step .step-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--teal); margin-bottom: 8px;
+  }
+  .flow-step .step-copy {
+    font-size: 13px; line-height: 1.65; color: #8AACAC;
+  }
+  .flow-step .step-copy strong { color: var(--white); }
+  #s7 .lane6-note {
+    margin-top: 32px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; color: var(--muted);
+  }
+  #s7 .lane6-note .dot { width: 6px; height: 6px; background: var(--teal); border-radius: 50%; }
+  #s7 .lane6-note strong { color: var(--teal); }
+  #s7 .slide-num {
+    position: absolute; bottom: 36px; right: 60px;
+    font-size: 11px; color: var(--muted); letter-spacing: 0.15em;
+  }
+
+  /* ══════════════════════════════════════
+     NAVIGATION
+  ══════════════════════════════════════ */
+  #nav {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+    background: rgba(8,12,12,0.9);
+    border: 1px solid var(--teal-border);
+    padding: 10px 20px;
+    backdrop-filter: blur(8px);
+  }
+  #nav button {
+    background: none;
+    border: 1px solid var(--teal-border);
+    color: var(--teal);
+    width: 32px; height: 32px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  #nav button:hover { background: var(--teal-dim); border-color: var(--teal); }
+  #nav button:disabled { opacity: 0.2; cursor: default; }
+  #nav button:disabled:hover { background: none; }
+  #nav .dots {
+    display: flex; gap: 6px; align-items: center;
+  }
+  #nav .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  #nav .dot.active {
+    background: var(--teal);
+    transform: scale(1.4);
+  }
+  #nav .counter {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 0.12em; min-width: 40px; text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div id="scaler">
+  <div id="deck">
+
+    <!-- ══ SLIDE 1 ══ -->
+    <div class="slide active" id="s1">
+      <div class="brand-corner">
+        <div class="logo-mark"><span>L6</span></div>
+        <span class="brand-name">Lane6</span>
+      </div>
+
+      <div class="eyebrow">
+        <div class="geo-dot"></div>
+        <span>Corelytics × Lane6 — Lead Generation</span>
+      </div>
+
+      <h1>What We Built<br>for <em>Corelytics</em></h1>
+      <p class="subtitle">3 lead gen tools live and ready for traffic</p>
+
+      <div class="tag-row">
+        <div class="tag">Live Tools</div>
+        <div class="tag">Qualified Lead Capture</div>
+        <div class="tag">Exit &amp; Financial Planning</div>
+      </div>
+
+      <div class="big-geo"></div>
+      <div class="big-geo-2"></div>
+      <div class="slide-num">01 / 07</div>
+    </div>
+
+    <!-- ══ SLIDE 2 ══ -->
+    <div class="slide" id="s2">
+      <div class="geo-tr"></div>
+      <div class="geo-bl"></div>
+
+      <div class="s-label">
+        <div class="geo-dot"></div>
+        The Setup
+      </div>
+      <h2>Why We Built<br>These Tools</h2>
+      <div class="h-rule"></div>
+
+      <p class="body-copy">
+        Lane6 built three interactive lead capture tools designed to attract
+        <strong>Corelytics' ideal prospects</strong> — business owners actively thinking about
+        exit planning or long-term financial strategy. Each tool delivers real value upfront,
+        collects <strong>qualified lead data</strong> at the moment of highest intent, and
+        funnels prospects directly toward a <strong>Corelytics advisor conversation</strong>.
+        The infrastructure is built and live. Now we need marketing firepower to drive traffic.
+      </p>
+
+      <div class="stat-row">
+        <div class="stat">
+          <span class="num">3</span>
+          <span class="lbl">Live Tools</span>
+        </div>
+        <div class="stat">
+          <span class="num">0s</span>
+          <span class="lbl">Setup Time</span>
+        </div>
+        <div class="stat">
+          <span class="num">40%</span>
+          <span class="lbl">Commission / Deal</span>
+        </div>
+      </div>
+
+      <div class="slide-num">02 / 07</div>
+    </div>
+
+    <!-- ══ SLIDE 3 ══ -->
+    <div class="slide tool-slide" id="s3">
+      <div class="left-panel">
+        <div class="panel-geo"></div>
+        <span class="tool-num">01</span>
+        <div class="tool-label">
+          <div class="geo-dot"></div>
+          Tool 1 of 3
+        </div>
+        <h2>Business Sale<br>Tax Calculator</h2>
+        <div class="h-rule"></div>
+        <p class="desc">
+          Enter sale price, business structure, years owned, and state —
+          get your <strong>estimated net proceeds</strong> after federal and state taxes.
+          Lead data captured before results reveal. CTA pushes to a free exit review.
+        </p>
+        <a href="https://jakemattoon16.github.io/Buisness-Sale-Tax-Calculator/" target="_blank" class="tool-link">
+          View Live Tool <span class="arrow">→</span>
+        </a>
+      </div>
+
+      <div class="right-panel">
+        <div class="rp-label">How it works</div>
+
+        <div class="detail-card">
+          <div class="card-icon">1</div>
+          <div class="card-body">
+            <div class="card-title">Input</div>
+            <div class="card-text">Sale price · Business structure · Years owned · State of residence</div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">2</div>
+          <div class="card-body">
+            <div class="card-title">Lead Gate</div>
+            <div class="card-text">Name, contact info, and <strong>estimated investable assets</strong> captured before results unlock</div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">3</div>
+          <div class="card-body">
+            <div class="card-title">Output + CTA</div>
+            <div class="card-text">Detailed after-tax net proceeds breakdown → <strong>Free Exit Review</strong> call prompt</div>
+          </div>
+        </div>
+
+        <div class="hook-box">
+          "What will I actually walk away with?" — the first question every seller asks.
+        </div>
+      </div>
+
+      <div class="slide-num">03 / 07</div>
+    </div>
+
+    <!-- ══ SLIDE 4 ══ -->
+    <div class="slide tool-slide" id="s4">
+      <div class="left-panel">
+        <div class="panel-geo"></div>
+        <span class="tool-num">02</span>
+        <div class="tool-label">
+          <div class="geo-dot"></div>
+          Tool 2 of 3
+        </div>
+        <h2>Is Your Business<br>Exit-Ready?</h2>
+        <div class="h-rule"></div>
+        <p class="desc">
+          A <strong>5-question quiz</strong> that scores how prepared a business owner is for an exit.
+          Takes under 2 minutes. Lead data captured before score reveals. CTA pushes to an advisor call.
+        </p>
+        <a href="https://jakemattoon16.github.io/Exit-Ready-Quiz/" target="_blank" class="tool-link">
+          View Live Tool <span class="arrow">→</span>
+        </a>
+      </div>
+
+      <div class="right-panel">
+        <div class="rp-label">How it works</div>
+
+        <div class="detail-card">
+          <div class="card-icon">1</div>
+          <div class="card-body">
+            <div class="card-title">Quiz</div>
+            <div class="card-text">5 targeted questions · Under 2 minutes · Feels like a self-assessment, not a form</div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">2</div>
+          <div class="card-body">
+            <div class="card-title">Lead Gate</div>
+            <div class="card-text">Name, contact info, and investable assets collected before <strong>score is revealed</strong></div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">3</div>
+          <div class="card-body">
+            <div class="card-title">Output + CTA</div>
+            <div class="card-text">Readiness score with personalized insight → <strong>Book an Advisor Call</strong></div>
+          </div>
+        </div>
+
+        <div class="hook-box">
+          "Most business owners leave 20–40% of potential value on the table."
+        </div>
+      </div>
+
+      <div class="slide-num">04 / 07</div>
+    </div>
+
+    <!-- ══ SLIDE 5 ══ -->
+    <div class="slide tool-slide" id="s5">
+      <div class="left-panel">
+        <div class="panel-geo"></div>
+        <span class="tool-num">03</span>
+        <div class="tool-label">
+          <div class="geo-dot"></div>
+          Tool 3 of 3
+        </div>
+        <h2>Rate Your<br>Financial Plan</h2>
+        <div class="h-rule"></div>
+        <p class="desc">
+          A <strong>10-statement yes/no scorecard</strong> that rates the strength of a prospect's
+          financial plan in 60 seconds. Scores 0–10 with tiered labels from Critical to Excellent.
+          Lead gate before reveal. CTA: 30-minute advisor review.
+        </p>
+        <a href="https://jakemattoon16.github.io/Financial-Plan-Scorecard/" target="_blank" class="tool-link">
+          View Live Tool <span class="arrow">→</span>
+        </a>
+      </div>
+
+      <div class="right-panel">
+        <div class="rp-label">How it works</div>
+
+        <div class="detail-card">
+          <div class="card-icon">1</div>
+          <div class="card-body">
+            <div class="card-title">Scorecard</div>
+            <div class="card-text">10 yes/no statements · 60 seconds to complete · Zero friction</div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">2</div>
+          <div class="card-body">
+            <div class="card-title">Lead Gate</div>
+            <div class="card-text">Contact info captured before <strong>score and tier are revealed</strong></div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">3</div>
+          <div class="card-body">
+            <div class="card-title">Output + CTA</div>
+            <div class="card-text">Score 0–10 · Tiered label (Critical → Excellent) → <strong>30-Min Advisor Review</strong></div>
+          </div>
+        </div>
+
+        <div class="hook-box">
+          "How strong is your financial plan, really?" — curiosity-driven, low-commitment entry point.
+        </div>
+      </div>
+
+      <div class="slide-num">05 / 07</div>
+    </div>
+
+    <!-- ══ SLIDE 6 ══ -->
+    <div class="slide" id="s6">
+      <div class="geo-tr"></div>
+
+      <div class="s-label">The Ask</div>
+      <h2>What We Need<br>from Alec</h2>
+      <div class="h-rule"></div>
+
+      <div class="ask-grid">
+        <div class="ask-item">
+          <div class="ask-num">01</div>
+          <div class="ask-title">Branded Tool Versions</div>
+          <div class="ask-sub">Styled versions of each tool using Corelytics' visual identity — colors, fonts, logo, tone. These tools should feel native to the brand.</div>
+        </div>
+
+        <div class="ask-item">
+          <div class="ask-num">02</div>
+          <div class="ask-title">Social &amp; Ad Creative</div>
+          <div class="ask-sub">Hook-driven creative to drive traffic to each tool — short-form video, static ads, LinkedIn posts. Each tool has a strong angle.</div>
+        </div>
+
+        <div class="ask-item">
+          <div class="ask-num">03</div>
+          <div class="ask-title">Landing Page Support</div>
+          <div class="ask-sub">Copy, layout suggestions, or supporting assets for any page that wraps or promotes the tools — if needed to improve conversion.</div>
+        </div>
+
+        <div class="ask-item">
+          <div class="ask-num">04</div>
+          <div class="ask-title">Your Marketing Brain</div>
+          <div class="ask-sub">What channels, angles, or amplification plays does Alec see that we don't? We're open to ideas — that's the point of this meeting.</div>
+        </div>
+      </div>
+
+      <div class="slide-num">06 / 07</div>
+    </div>
+
+    <!-- ══ SLIDE 7 ══ -->
+    <div class="slide" id="s7">
+      <div class="geo-bl"></div>
+
+      <div class="s-label">The Backend</div>
+      <h2>What Happens When<br>a Lead Comes In</h2>
+      <div class="h-rule"></div>
+
+      <div class="flow">
+        <div class="flow-step">
+          <div class="step-icon">①</div>
+          <div class="step-title">Captured</div>
+          <div class="step-copy">
+            Lead submits contact info and investable assets inside the tool before results unlock. <strong>High-intent moment.</strong>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">②</div>
+          <div class="step-title">Logged</div>
+          <div class="step-copy">
+            Data flows into a <strong>backend system</strong> managed by Lane6. Every lead is timestamped, tagged by tool source, and stored.
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">③</div>
+          <div class="step-title">Qualified</div>
+          <div class="step-copy">
+            Leads are filtered by <strong>investable asset threshold</strong>. Low-quality submissions don't waste advisor time.
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">④</div>
+          <div class="step-title">Routed</div>
+          <div class="step-copy">
+            Qualified leads are handed off to a <strong>Corelytics advisor</strong> for follow-up. Lane6 handles everything upstream.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane6-note">
+        <div class="dot"></div>
+        <span>Lane6 owns the infrastructure. <strong>Corelytics gets the qualified conversations.</strong> That's the deal.</span>
+      </div>
+
+      <div class="slide-num">07 / 07</div>
+    </div>
+
+  </div><!-- /deck -->
+</div><!-- /scaler -->
+
+<!-- ══ NAV ══ -->
+<div id="nav">
+  <button id="btn-prev" disabled>←</button>
+  <div class="dots" id="dots"></div>
+  <span class="counter" id="counter">1 / 7</span>
+  <button id="btn-next">→</button>
+</div>
+
+<script>
+  const TOTAL = 7;
+  let current = 0;
+
+  const slides = document.querySelectorAll('.slide');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const counter = document.getElementById('counter');
+  const dotsEl  = document.getElementById('dots');
+
+  // Build dots
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dotsEl.children[current].classList.remove('active');
+    current = Math.max(0, Math.min(TOTAL - 1, n));
+    slides[current].classList.add('active');
+    dotsEl.children[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + TOTAL;
+    btnPrev.disabled = current === 0;
+    btnNext.disabled = current === TOTAL - 1;
+  }
+
+  btnPrev.addEventListener('click', () => goTo(current - 1));
+  btnNext.addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault(); goTo(current + 1);
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault(); goTo(current - 1);
+    }
+  });
+
+  // ── SCALER: fit deck to window ──
+  function scale() {
+    const scaler = document.getElementById('scaler');
+    const deck   = document.getElementById('deck');
+    const W = scaler.clientWidth;
+    const H = scaler.clientHeight;
+    const scaleX = W / 1280;
+    const scaleY = H / 720;
+    const s = Math.min(scaleX, scaleY) * 0.97;
+    deck.style.transform = `scale(${s})`;
+  }
+  scale();
+  window.addEventListener('resize', scale);
+</script>
+
+</body>
+</html>
